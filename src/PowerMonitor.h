@@ -14,9 +14,20 @@ public:
             return false;
         }
         
-        // 配置INA219
-        ina219.setCalibration_32V_1A();
+        // 配置INA219使用0.01Ω分流电阻
+        // 使用自定义校准
+        // 最大电流 = 3.2A
+        // 最大电压 = 32V
+        // 分流电阻 = 0.01Ω
+        ina219.setCalibration_32V_2A();
+        
+        // 打印配置信息
         Serial.println("INA219 initialized successfully");
+        Serial.println("Configuration:");
+        Serial.println("- Shunt Resistor: 0.01 ohm");
+        Serial.println("- Max Current: 3.2A");
+        Serial.println("- Max Voltage: 32V");
+        
         return true;
     }
     
