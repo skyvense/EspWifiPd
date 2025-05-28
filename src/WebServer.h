@@ -5,35 +5,11 @@
 #include <ESP8266httpUpdate.h>
 #include "EspSmartWifi.h"
 #include "PowerMonitor.h"
-#include "Config.h"
 #include "Display.h"
 
-// 继电器引脚定义 - 统一在这里定义
-#define RELAY_PIN_1 16  // D1
-#define RELAY_PIN_2 14  // D2
-#define RELAY_PIN_3 12  // D3
-#define BUTTON_PIN 13   // D7
-// 定时器重复类型
-enum class TimerRepeat {
-    ONCE,       // 只执行一次
-    DAILY,      // 每天
-    WEEKDAY,    // 工作日（周一到周五）
-    WEEKEND,    // 周末（周六和周日）
-    CUSTOM      // 自定义重复（可以指定具体星期几）
-};
+#define BUTTON_PIN 12  
 
-// 定时器结构体
-struct Timer {
-    uint8_t id;             // 定时器ID
-    uint8_t relayId;        // 继电器ID (0-2)
-    uint8_t hour;           // 小时 (0-23)
-    uint8_t minute;         // 分钟 (0-59)
-    bool enabled;           // 是否启用
-    bool state;             // true = ON, false = OFF
-    TimerRepeat repeat;     // 重复类型
-    uint8_t weekdays;       // 自定义重复时的星期几 (bit 0-6 代表周日到周六)
-    time_t lastTriggered;   // 上次触发时间
-};
+
 
 class WebServer {
 public:
