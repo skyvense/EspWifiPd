@@ -38,26 +38,14 @@ void Display::displayWiFiStatus() {
     }
 }
 
-void Display::displayRelayStatus() {
-    display.setTextSize(1);
-    display.println(F("Relay Status:"));
-    
-    // 直接使用缓存的状态
-    for (int i = 0; i < 3; i++) {
-        display.print(F("Relay "));
-        display.print(i + 1);
-        display.print(F(": "));
-        display.println(cachedRelayStates[i] ? F("ON") : F("OFF"));
-    }
-}
 
 void Display::displayPowerInfo() {
     display.setTextSize(1);
     display.println(F("Power Monitor:"));
     
-    for (int ch = 0; ch < 3; ch++) {
-        float voltage = powerMonitor.getBusVoltage_V(ch);
-        float current = powerMonitor.getCurrent_mA(ch);
+    for (int ch = 0; ch < 1; ch++) {
+        float voltage = powerMonitor.getBusVoltage_V();
+        float current = powerMonitor.getCurrent_mA();
         
         display.print(F("CH"));
         display.print(ch + 1);
@@ -69,9 +57,3 @@ void Display::displayPowerInfo() {
     }
 }
 
-// 新增：更新缓存状态的函数
-void Display::updateRelayStates(const bool states[4]) {
-    for (int i = 0; i < 4; i++) {
-        cachedRelayStates[i] = states[i];
-    }
-} 

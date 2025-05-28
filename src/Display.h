@@ -15,7 +15,7 @@ private:
     Adafruit_SSD1306 display;
     unsigned long lastUpdate = 0;
     int currentPage = 0;
-    const int totalPages = 3; // WiFi状态、继电器状态、电源信息
+    const int totalPages = 2; // WiFi状态、电源信息
 
     void displayWiFiStatus();
     void displayRelayStatus();
@@ -52,9 +52,6 @@ public:
                     displayWiFiStatus();
                     break;
                 case 1:
-                    displayRelayStatus();
-                    break;
-                case 2:
                     displayPowerInfo();
                     break;
             }
@@ -63,6 +60,4 @@ public:
         }
     }
 
-    // 新增：更新继电器状态的公共方法
-    void updateRelayStates(const bool states[4]);
 }; 

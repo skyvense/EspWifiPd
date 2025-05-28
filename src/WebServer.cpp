@@ -5,7 +5,7 @@
 #define BUILD_DATE_STR __DATE__ " " __TIME__
 
 // 定义静态成员变量
-const int WebServer::RELAY_PINS[3] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3};
+
 const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -1247,59 +1247,6 @@ void WebServer::stop() {
     Serial.println("HTTP server stopped");
 }
 
-void WebServer::updateRelay(int index, bool state) {
-    if(index >= 0 && index < 3) {
-        // 获取当前缓存状态
-        bool states[4];
-        if (!wifi.getRelayStates(states)) {
-            Serial.println("Failed to get relay states");
-            return;
-        }
-        
-        // 只有当状态发生变化时才更新
-        if (states[index] != state) {
-            // 更新硬件状态
-            digitalWrite(RELAY_PINS[index], state ? HIGH:LOW);
-            
-            // 添加串口日志
-            Serial.print("Relay ");
-            Serial.print(index + 1);
-            Serial.print(" changed to ");
-            Serial.println(state ? "ON" : "OFF");
-            
-            // 打印详细信息
-            Serial.print("Pin: D");
-            Serial.print(RELAY_PINS[index] == D5 ? "1" : 
-                        RELAY_PINS[index] == D6 ? "2" : 
-                        RELAY_PINS[index] == D7 ? "3" : "5");
-            Serial.print(", State: ");
-            Serial.println(state ? "HIGH (ON)" : "LOW (OFF)");
-            
-            // 保存状态到配置
-            if (wifi.updateRelayState(index, state)) {
-                Serial.println("Relay state saved successfully");
-                
-                // 更新显示缓存
-                states[index] = state;
-                display.updateRelayStates(states);
-
-                // 重置保护状态
-                protectionTriggered[index] = false;
-            } else {
-                Serial.println("Failed to save relay state");
-            }
-
-            // 广播状态更新到所有连接的客户端
-            StaticJsonDocument<128> doc;
-            doc["relay"] = index + 1;
-            doc["state"] = state;
-            String response;
-            serializeJson(doc, response);
-            server.send(200, "application/json", response);
-        }
-    }
-}
-
 
 void WebServer::handlePower() {
     StaticJsonDocument<512> doc;
@@ -1307,9 +1254,9 @@ void WebServer::handlePower() {
     if (powerMonitor.isInitialized()) {
         for (int i = 0; i < 3; i++) {
             JsonObject channel = doc.createNestedObject("channel" + String(i + 1));
-            channel["current"] = powerMonitor.getCurrent_mA(i);
-            channel["voltage"] = powerMonitor.getBusVoltage_V(i);
-            channel["power"] = powerMonitor.getPower_mW(i) / 1000.0;  // 转换为瓦特
+            channel["current"] = powerMonitor.getCurrent_mA();
+            channel["voltage"] = powerMonitor.getBusVoltage_V();
+            channel["power"] = powerMonitor.getPower_mW() / 1000.0;  // 转换为瓦特
         }
     }
     
@@ -1342,14 +1289,6 @@ void WebServer::handleStatus() {
     doc["wifi"]["rssi"] = WiFi.RSSI();
     doc["wifi"]["ip"] = WiFi.localIP().toString();
     
-    // Relay states
-    bool states[3];
-    if (wifi.getRelayStates(states)) {
-        JsonArray statesArray = doc.createNestedArray("relays");
-        for (int i = 0; i < 3; i++) {
-            statesArray.add(states[i]);
-        }
-    }
 
     // Build date
     doc["build_date"] = __DATE__ " " __TIME__;
@@ -1634,38 +1573,8 @@ void WebServer::handleNotFound() {
 }
 
 void WebServer::handleButtonPress() {
-    // 获取当前继电器状态
-    bool states[4];
-    if (wifi.getRelayStates(states)) {
-        // 检查是否有任何继电器是开启的
-        bool anyOn = false;
-        for (int i = 0; i < 3; i++) {
-            if (states[i]) {
-                anyOn = true;
-                break;
-            }
-        }
-        
-        // 如果任何继电器是开启的，关闭所有继电器
-        // 否则，打开所有继电器
-        bool newState = !anyOn;
-        for (int i = 0; i < 3; i++) {
-            updateRelay(i, newState);
-        }
-        
-        Serial.print("Button pressed - All relays turned ");
-        Serial.println(newState ? "ON" : "OFF");
+  
 
-        // 广播状态更新到所有连接的客户端
-        StaticJsonDocument<512> doc;
-        JsonArray statesArray = doc.createNestedArray("states");
-        for (int i = 0; i < 3; i++) {
-            statesArray.add(newState);
-        }
-        String response;
-        serializeJson(doc, response);
-        server.send(200, "application/json", response);
-    }
 }
 
 void WebServer::initTime() {

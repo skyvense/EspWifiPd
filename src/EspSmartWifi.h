@@ -67,10 +67,7 @@ public:
     const Config& getConfig() const { return _config; }
     WiFiClient client;
 
-    // 继电器状态相关方法
-    bool updateRelayState(int index, bool state);
-    bool getRelayStates(bool states[4]);
-    void syncRelayStates();  // 同步继电器状态到硬件
+
     bool SaveConfig(Config config);
     // 获取AP模式状态
     bool isAPMode() const { return _isAPMode; }

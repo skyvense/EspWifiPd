@@ -127,10 +127,10 @@ void publishPowerData() {
     
     Serial.println("\n=== Power Monitor Readings ===");
     // 获取三个通道的数据
-    for (int i = 0; i < 3; i++) {
-        float current = powerMonitor.getCurrent_mA(i);
-        float voltage = powerMonitor.getBusVoltage_V(i);
-        float power = powerMonitor.getPower_mW(i);
+    for (int i = 0; i < 1; i++) {
+        float current = powerMonitor.getCurrent_mA();
+        float voltage = powerMonitor.getBusVoltage_V();
+        float power = powerMonitor.getPower_mW();
         
         // 打印到串口
         Serial.print("Channel ");
@@ -152,13 +152,6 @@ void publishPowerData() {
         channel["voltage"] = voltage;
         channel["power"] = power;
         
-        // 获取通道状态
-        bool states[4];
-        if (wifi.getRelayStates(states)) {
-            channel["state"] = states[i] ? 1 : 0;
-        } else {
-            channel["state"] = 0;  // 如果获取状态失败，默认为关闭状态
-        }
     }
     Serial.println("===========================\n");
     

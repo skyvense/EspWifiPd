@@ -17,7 +17,6 @@ public:
     void begin();
     void handleClient();
     void stop();
-    void updateRelay(int index, bool state);
     void handleButtonPress();
 
 private:
@@ -31,21 +30,10 @@ private:
     PowerMonitor powerMonitor;
     
     
-    // 定时器相关
-    static const int MAX_TIMERS = 10;
-    Timer timers[MAX_TIMERS];
-    int timerCount = 0;
-    unsigned long lastTimeCheck = 0;
-    const unsigned long timeCheckInterval = 1000;  // 1秒
-    
-    // 电流保护相关
-    uint16_t currentLimits[3] = {0, 0, 0};  // 电流限制值（毫安）
-    bool protectionTriggered[3] = {false, false, false};  // 保护触发状态
     
     // 基本处理函数
     void handleRoot();
     void handleStatus();
-    void handleRelay(int relay);
     void handlePower();
     void handleRestart();
     void handleUpgrade();
@@ -58,28 +46,8 @@ private:
     void HandleConfigRoot();
     void HandleConfigSave();
     void handleGetConfigData();
-    // 定时器相关函数
-    void handleGetTimerConfig();
-    void handleAddTimer();
-    void handleTimerConfig();
-    void handleDeleteTimer();
-    bool addTimer(const Timer& timer);
-    bool deleteTimer(uint8_t id);
-    bool updateTimer(const Timer& timer);
-    Timer* getTimer(uint8_t id);
-    bool isWeekday(int weekday);
-    bool shouldTriggerTimer(const Timer& timer, const tm* timeinfo);
-    void saveTimerConfig();
-    void loadTimerConfig();
-    void checkTimers();
+
     void initTime();
     void syncTime();
-    
-    // 电流保护相关函数
-    void handleGetProtection();
-    void handleSetProtection();
-    void handleProtectionStatus();
-    void saveProtectionConfig();
-    void loadProtectionConfig();
-    void checkCurrentProtection();
+
 }; 

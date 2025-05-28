@@ -139,62 +139,6 @@ bool EspSmartWifi::saveRelayStatesToFlash() {
     return true;
 }
 
-bool EspSmartWifi::updateRelayState(int index, bool state) {
-    if (index >= 0 && index < 4) {
-        cachedRelayStates[index] = state;  // 更新缓存
-        statesLoaded = true;  // 标记已加载
-        return saveRelayStatesToFlash();  // 保存到flash
-    }
-    return false;
-}
-
-bool EspSmartWifi::getRelayStates(bool states[4]) {
-    if (!statesLoaded) {
-        // 如果缓存未加载，从flash读取
-        if (!loadRelayStatesFromFlash()) {
-            return false;
-        }
-    }
-    // 从缓存复制状态
-    memcpy(states, cachedRelayStates, sizeof(cachedRelayStates));
-    return true;
-}
-
-void EspSmartWifi::syncRelayStates() {
-    Serial.println("\n=== Syncing Relay States to Hardware ===");
-    
-    // 确保状态已加载
-    if (!statesLoaded) {
-        if (!loadRelayStatesFromFlash()) {
-            Serial.println("Failed to load relay states");
-            return;
-        }
-    }
-
-    // 使用 WebServer.h 中定义的引脚
-    const int RELAY_PINS[3] = {RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3};
-    
-    for (int i = 0; i < 3; i++) {
-        // 设置引脚模式
-        pinMode(RELAY_PINS[i], OUTPUT);
-        
-        // 设置继电器状态（HIGH为开启，LOW为关闭）
-        digitalWrite(RELAY_PINS[i], cachedRelayStates[i] ? HIGH : LOW);
-        
-        Serial.print("Relay ");
-        Serial.print(i + 1);
-        Serial.print(" (Pin D");
-        Serial.print(RELAY_PINS[i] == RELAY_PIN_1 ? "1" : 
-                    RELAY_PINS[i] == RELAY_PIN_2 ? "2" : 
-                    RELAY_PINS[i] == RELAY_PIN_3 ? "3" : "5");
-        Serial.print("): ");
-        Serial.print(cachedRelayStates[i] ? "ON" : "OFF");
-        Serial.print(" (");
-        Serial.print(cachedRelayStates[i] ? "HIGH" : "LOW");
-        Serial.println(")");
-    }
-    Serial.println("=== Relay States Synced ===\n");
-}
 
 void EspSmartWifi::BaseConfig()
 {
