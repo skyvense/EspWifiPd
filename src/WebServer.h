@@ -14,7 +14,7 @@
 
 class WebServer {
 public:
-    WebServer(EspSmartWifi& wifi, EasyLed& led, Display& display);
+    WebServer(EspSmartWifi& wifi, EasyLed& led, Display& display, VoltageCtl &voltagectl);
     void begin();
     void handleClient();
     void stop();
@@ -29,7 +29,7 @@ private:
     EasyLed& led;
     Display& display;
     PowerMonitor powerMonitor;
-    VoltageCtl voltageCtl;
+    VoltageCtl &voltageCtl;
     
     
     

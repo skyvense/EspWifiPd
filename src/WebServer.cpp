@@ -554,36 +554,16 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             <h2>Power Monitoring</h2>
             <div class="power-grid">
                 <div class="power-item">
-                    <div class="power-label">Channel 1</div>
+                    <div class="power-label">Power Monitor</div>
                     <div class="power-value" id="power1">0.00 W</div>
                     <div class="power-label">Current: <span id="current1">0.00 mA</span></div>
                     <div class="power-label">Voltage: <span id="voltage1">0.00 V</span></div>
-                </div>
-                <div class="power-item">
-                    <div class="power-label">Channel 2</div>
-                    <div class="power-value" id="power2">0.00 W</div>
-                    <div class="power-label">Current: <span id="current2">0.00 mA</span></div>
-                    <div class="power-label">Voltage: <span id="voltage2">0.00 V</span></div>
-                </div>
-                <div class="power-item">
-                    <div class="power-label">Channel 3</div>
-                    <div class="power-value" id="power3">0.00 W</div>
-                    <div class="power-label">Current: <span id="current3">0.00 mA</span></div>
-                    <div class="power-label">Voltage: <span id="voltage3">0.00 V</span></div>
                 </div>
             </div>
         </div>
 
         <a href="/config" class="config-link">
             <i class="fas fa-cog"></i> WiFi Configuration
-        </a>
-
-        <a href="#" onclick="showTimerConfig(0)" class="config-link">
-            <i class="fas fa-clock"></i> Timer Configuration
-        </a>
-
-        <a href="#" onclick="showCurrentProtection()" class="config-link">
-            <i class="fas fa-bolt"></i> Current Protection
         </a>
 
         <div class="footer">
@@ -612,103 +592,6 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
     </div>
 
-    <!-- 添加定时器配置模态框 -->
-    <div id="timerModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Timer Configuration</h3>
-            <div class="timer-config">
-                <div class="timer-section">
-                    <h4>Timer Settings</h4>
-                    <div class="timer-inputs">
-                        <div class="input-group">
-                            <label>Relay:</label>
-                            <select id="timerRelay">
-                                <option value="0">Relay 1</option>
-                                <option value="1">Relay 2</option>
-                                <option value="2">Relay 3</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Time:</label>
-                            <input type="time" id="timerTime">
-                        </div>
-                        <div class="input-group">
-                            <label>Action:</label>
-                            <select id="timerAction">
-                                <option value="true">Turn ON</option>
-                                <option value="false">Turn OFF</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Repeat:</label>
-                            <select id="timerRepeat" onchange="toggleWeekdaySelection()">
-                                <option value="0">Once</option>
-                                <option value="1">Daily</option>
-                                <option value="2">Weekdays</option>
-                                <option value="3">Weekends</option>
-                                <option value="4">Custom</option>
-                            </select>
-                        </div>
-                        <div id="weekdaySelection" style="display: none;">
-                            <label>Weekdays:</label>
-                            <div class="weekday-buttons">
-                                <label><input type="checkbox" value="0"> Sun</label>
-                                <label><input type="checkbox" value="1"> Mon</label>
-                                <label><input type="checkbox" value="2"> Tue</label>
-                                <label><input type="checkbox" value="3"> Wed</label>
-                                <label><input type="checkbox" value="4"> Thu</label>
-                                <label><input type="checkbox" value="5"> Fri</label>
-                                <label><input type="checkbox" value="6"> Sat</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timer-actions">
-                        <button onclick="saveTimer()" class="timer-btn">Save Timer</button>
-                    </div>
-                </div>
-                <div class="timer-list">
-                    <h4>Active Timers</h4>
-                    <div id="timerList"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 添加电流保护配置模态框 -->
-    <div id="currentProtectionModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Current Protection Settings</h3>
-            <div class="protection-config">
-                <div class="protection-section">
-                    <h4>Channel Settings</h4>
-                    <div class="protection-inputs">
-                        <div class="input-group">
-                            <label>Channel 1 Current Limit (mA):</label>
-                            <input type="number" id="currentLimit1" min="0" max="10000" step="100">
-                        </div>
-                        <div class="input-group">
-                            <label>Channel 2 Current Limit (mA):</label>
-                            <input type="number" id="currentLimit2" min="0" max="10000" step="100">
-                        </div>
-                        <div class="input-group">
-                            <label>Channel 3 Current Limit (mA):</label>
-                            <input type="number" id="currentLimit3" min="0" max="10000" step="100">
-                        </div>
-                    </div>
-                    <div class="protection-actions">
-                        <button onclick="saveCurrentProtection()" class="timer-btn">Save Settings</button>
-                    </div>
-                </div>
-                <div class="protection-status">
-                    <h4>Protection Status</h4>
-                    <div id="protectionStatus"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         let ws;
         let powerChart;
@@ -721,59 +604,20 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
         const maxDataPoints = 60;
         let currentChannelIndex = 0;
         let currentDataType = 'power';
-        let currentTimerId = null;
-        let currentRelay = 0;
-
-        // 定期检查继电器状态
-        function checkRelayStates() {
-            fetch('/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.relays) {
-                        for (let i = 0; i < data.relays.length; i++) {
-                            const state = data.relays[i];
-                            document.getElementById('status' + (i + 1)).textContent = state ? 'ON' : 'OFF';
-                            document.querySelector(`input[type="checkbox"][onchange="toggleRelay(${i + 1}, this.checked)"]`).checked = state;
-                        }
-                    }
-                })
-                .catch(error => console.error('Error checking relay states:', error));
-        }
-
-        function toggleRelay(relay, state) {
-            fetch('/relay/' + relay + '?state=' + (state ? '1' : '0'))
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // 更新状态显示
-                    document.getElementById('status' + relay).textContent = state ? 'ON' : 'OFF';
-                })
-                .catch(error => {
-                    console.error('Error toggling relay:', error);
-                    // 如果发生错误，重新检查状态以确保显示正确
-                    checkRelayStates();
-                });
-        }
 
         function updatePowerData() {
             fetch('/power')
                 .then(response => response.json())
                 .then(data => {
-                    for (let i = 1; i <= 3; i++) {
-                        const channel = data['channel' + i];
-                        if (channel) {
-                            document.getElementById('power' + i).textContent = channel.power.toFixed(2) + ' W';
-                            document.getElementById('current' + i).textContent = channel.current.toFixed(2) + ' mA';
-                            document.getElementById('voltage' + i).textContent = channel.voltage.toFixed(2) + ' V';
-                            
-                            // 如果图表正在显示，更新图表数据
-                            if (powerChart && currentChannelIndex === i - 1) {
-                                updateChartData(channel);
-                            }
+                    const channel = data['channel1'];
+                    if (channel) {
+                        document.getElementById('power1').textContent = channel.power.toFixed(2) + ' W';
+                        document.getElementById('current1').textContent = channel.current.toFixed(2) + ' mA';
+                        document.getElementById('voltage1').textContent = channel.voltage.toFixed(2) + ' V';
+                        
+                        // 如果图表正在显示，更新图表数据
+                        if (powerChart && currentChannelIndex === 0) {
+                            updateChartData(channel);
                         }
                     }
                 })
@@ -785,7 +629,7 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             currentChannelIndex = channelIndex;
             const modal = document.getElementById('powerChartModal');
             const modalTitle = document.getElementById('modalTitle');
-            modalTitle.textContent = `Channel ${channelIndex + 1} Power Monitor`;
+            modalTitle.textContent = `Power Monitor Chart`;
             
             // 初始化图表
             if (!powerChart) {
@@ -869,28 +713,18 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
         document.querySelectorAll('.close').forEach(closeBtn => {
             closeBtn.onclick = function() {
                 document.getElementById('powerChartModal').style.display = 'none';
-                document.getElementById('timerModal').style.display = 'none';
-                document.getElementById('currentProtectionModal').style.display = 'none';
             }
         });
 
         // 点击模态框外部关闭
         window.onclick = function(event) {
             const powerModal = document.getElementById('powerChartModal');
-            const timerModal = document.getElementById('timerModal');
-            const protectionModal = document.getElementById('currentProtectionModal');
             if (event.target == powerModal) {
                 powerModal.style.display = 'none';
             }
-            if (event.target == timerModal) {
-                timerModal.style.display = 'none';
-            }
-            if (event.target == protectionModal) {
-                protectionModal.style.display = 'none';
-            }
         }
 
-        // 为每个功率监测项添加点击事件
+        // 为功率监测项添加点击事件
         document.addEventListener('DOMContentLoaded', function() {
             const powerItems = document.querySelectorAll('.power-monitor .power-item');
             powerItems.forEach((item, index) => {
@@ -898,23 +732,13 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
                 item.addEventListener('click', () => showPowerChart(index));
             });
 
-            // 为每个继电器的Timer按钮添加点击事件
-            for (let i = 1; i <= 3; i++) {
-                const timerBtn = document.querySelector(`button[onclick="showTimerConfig(${i})"]`);
-                if (timerBtn) {
-                    timerBtn.addEventListener('click', () => showTimerConfig(i));
-                }
-            }
-
             // 初始更新
-            checkRelayStates();
             updatePowerData();
             updateBuildDate();
             checkVoltage();
         });
 
         // 定期更新数据
-        setInterval(checkRelayStates, 1000);  // 每秒检查继电器状态
         setInterval(updatePowerData, 1000);   // 每秒更新电源数据
 
         // 更新构建日期
@@ -928,259 +752,6 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
                 })
                 .catch(error => console.error('Error updating build date:', error));
         }
-
-        function showTimerConfig(relay) {
-            currentRelay = relay;
-            currentTimerId = null;  // 重置当前定时器ID
-            document.getElementById('timerTime').value = '';
-            document.getElementById('timerAction').value = 'true';
-            document.getElementById('timerRepeat').value = '1';
-            document.getElementById('timerRelay').value = relay;
-            toggleWeekdaySelection();
-            loadTimers();
-            document.getElementById('timerModal').style.display = 'block';
-        }
-        
-        function loadTimers() {
-            fetch('/timer')
-                .then(response => response.json())
-                .then(data => {
-                    const timerList = document.getElementById('timerList');
-                    timerList.innerHTML = '';
-                    
-                    if (data.timers) {
-                        data.timers.forEach(timer => {
-                            const timerItem = document.createElement('div');
-                            timerItem.className = 'timer-item';
-                            timerItem.innerHTML = `
-                                <div class="timer-info">
-                                    Relay ${timer.relayId + 1} - 
-                                    ${formatTime(timer.hour, timer.minute)} - 
-                                    ${timer.state ? 'ON' : 'OFF'} - 
-                                    ${formatRepeat(timer.repeat)}
-                                </div>
-                                <div class="timer-actions">
-                                    <button onclick="editTimer(${timer.id})" class="timer-btn">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deleteTimer(${timer.id})" class="timer-btn delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            `;
-                            timerList.appendChild(timerItem);
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading timers:', error);
-                    alert('Failed to load timers. Please try again.');
-                });
-        }
-        
-        function formatTime(hour, minute) {
-            return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-        }
-        
-        function formatRepeat(repeat) {
-            switch (parseInt(repeat)) {
-                case 0: return 'Once';
-                case 1: return 'Daily';
-                case 2: return 'Weekdays';
-                case 3: return 'Weekends';
-                case 4: return 'Custom';
-                default: return 'Unknown';
-            }
-        }
-        
-        function editTimer(id) {
-            currentTimerId = id;
-            fetch(`/timer?id=${id}`)
-                .then(response => response.json())
-                .then(timer => {
-                    document.getElementById('timerTime').value = 
-                        `${String(timer.hour).padStart(2, '0')}:${String(timer.minute).padStart(2, '0')}`;
-                    document.getElementById('timerAction').value = timer.state.toString();
-                    document.getElementById('timerRepeat').value = timer.repeat.toString();
-                    document.getElementById('timerRelay').value = timer.relayId;
-                    
-                    if (timer.repeat === 4) {
-                        const weekdays = document.querySelectorAll('#weekdaySelection input[type="checkbox"]');
-                        weekdays.forEach(checkbox => {
-                            checkbox.checked = (timer.weekdays & (1 << parseInt(checkbox.value))) !== 0;
-                        });
-                    }
-                    
-                    toggleWeekdaySelection();
-                })
-                .catch(error => {
-                    console.error('Error loading timer:', error);
-                    alert('Failed to load timer. Please try again.');
-                });
-        }
-        
-        function toggleWeekdaySelection() {
-            const repeat = document.getElementById('timerRepeat').value;
-            document.getElementById('weekdaySelection').style.display = 
-                repeat === '4' ? 'block' : 'none';
-        }
-        
-        function saveTimer() {
-            const time = document.getElementById('timerTime').value.split(':');
-            if (!time[0] || !time[1]) {
-                alert('Please enter a valid time');
-                return;
-            }
-
-            const hour = parseInt(time[0]);
-            const minute = parseInt(time[1]);
-            const state = document.getElementById('timerAction').value === 'true';
-            const repeat = parseInt(document.getElementById('timerRepeat').value);
-            const relayId = parseInt(document.getElementById('timerRelay').value);
-            
-            let weekdays = 0;
-            if (repeat === 4) {
-                document.querySelectorAll('#weekdaySelection input[type="checkbox"]:checked')
-                    .forEach(checkbox => {
-                        weekdays |= (1 << parseInt(checkbox.value));
-                    });
-            }
-            
-            const timer = {
-                id: currentTimerId || Date.now(),
-                relayId: relayId,
-                hour: hour,
-                minute: minute,
-                enabled: true,
-                state: state,
-                repeat: repeat,
-                weekdays: weekdays
-            };
-            
-            const method = currentTimerId ? 'PUT' : 'POST';
-            
-            fetch('/timer', {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(timer)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadTimers();
-                    // 重置表单
-                    currentTimerId = null;
-                    document.getElementById('timerTime').value = '';
-                    document.getElementById('timerAction').value = 'true';
-                    document.getElementById('timerRepeat').value = '1';
-                    document.getElementById('timerRelay').value = currentRelay;
-                    toggleWeekdaySelection();
-                } else {
-                    alert('Failed to save timer: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error saving timer:', error);
-                alert('Failed to save timer. Please try again.');
-            });
-        }
-        
-        function deleteTimer(id) {
-            if (confirm('Are you sure you want to delete this timer?')) {
-                fetch('/timer?id=' + id, {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        loadTimers();
-                    } else {
-                        alert('Failed to delete timer: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error deleting timer:', error);
-                    alert('Failed to delete timer. Please try again.');
-                });
-            }
-        }
-
-        function showCurrentProtection() {
-            // 加载当前设置
-            fetch('/protection')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('currentLimit1').value = data.channel1 || 0;
-                    document.getElementById('currentLimit2').value = data.channel2 || 0;
-                    document.getElementById('currentLimit3').value = data.channel3 || 0;
-                    updateProtectionStatus();
-                })
-                .catch(error => {
-                    console.error('Error loading protection settings:', error);
-                    alert('Failed to load protection settings');
-                });
-            
-            document.getElementById('currentProtectionModal').style.display = 'block';
-        }
-
-        function saveCurrentProtection() {
-            const settings = {
-                channel1: parseInt(document.getElementById('currentLimit1').value) || 0,
-                channel2: parseInt(document.getElementById('currentLimit2').value) || 0,
-                channel3: parseInt(document.getElementById('currentLimit3').value) || 0
-            };
-
-            fetch('/protection', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(settings)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Settings saved successfully');
-                    updateProtectionStatus();
-                } else {
-                    alert('Failed to save settings: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error saving protection settings:', error);
-                alert('Failed to save settings');
-            });
-        }
-
-        function updateProtectionStatus() {
-            fetch('/protection/status')
-                .then(response => response.json())
-                .then(data => {
-                    const statusDiv = document.getElementById('protectionStatus');
-                    let html = '';
-                    for (let i = 1; i <= 3; i++) {
-                        const channel = data[`channel${i}`];
-                        html += `
-                            <div class="protection-item">
-                                <div class="protection-label">Channel ${i}:</div>
-                                <div class="protection-value">
-                                    Current: ${channel.current.toFixed(2)} mA
-                                    ${channel.triggered ? '<span class="warning">(Protection Triggered)</span>' : ''}
-                                </div>
-                            </div>
-                        `;
-                    }
-                    statusDiv.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error('Error updating protection status:', error);
-                });
-        }
-
-        // 定期更新保护状态
-        setInterval(updateProtectionStatus, 1000);
 
         function setVoltage(voltage) {
             fetch('/voltage?level=' + voltage)
