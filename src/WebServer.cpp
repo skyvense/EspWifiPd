@@ -10,7 +10,7 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ESP8266 Relay Control</title>
+    <title>ESP8266 PD Power Supply</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -322,6 +322,35 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             color: var(--text-light);
         }
 
+        .chart-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .chart-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .chart-btn i {
+            margin-right: 8px;
+        }
+
+        .voltage-value {
+            color: #dc3545;
+        }
+
         .config-link {
             display: inline-block;
             margin-top: 20px;
@@ -581,7 +610,7 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
 <body>
     <div class="container">
         <div class="header">
-            <h1>ESP8266 Relay Control</h1>
+            <h1>ESP8266 PD Power Supply</h1>
             <div class="status">Status: Connected</div>
         </div>
 
@@ -598,8 +627,14 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
                 </div>
                 <div class="metric-item">
                     <div class="power-label">Voltage</div>
-                    <div class="power-value" id="voltage1">0.00 V</div>
+                    <div class="power-value voltage-value" id="voltage1">0.00 V</div>
                 </div>
+            </div>
+            <div style="text-align: center;">
+                <button class="chart-btn" onclick="showPowerChart(0)">
+                    <i class="fas fa-chart-line"></i>
+                    Show Power Chart
+                </button>
             </div>
         </div>
 
@@ -629,7 +664,7 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             </div>
             <div class="voltage-display">
                 <div class="power-label">Current Voltage</div>
-                <div class="power-value" id="currentVoltage">5V</div>
+                <div class="power-value voltage-value" id="currentVoltage">5V</div>
             </div>
         </div>
 
