@@ -3,10 +3,11 @@
 #include <Arduino.h>
 
 // PD电压档位定义
-#define VOLTAGE_9V  0
-#define VOLTAGE_12V 1
-#define VOLTAGE_15V 2
-#define VOLTAGE_20V 3
+#define VOLTAGE_5V  0
+#define VOLTAGE_9V  1
+#define VOLTAGE_12V 2
+#define VOLTAGE_15V 3
+#define VOLTAGE_20V 4
 
 // PD控制器引脚定义
 #define PD_CFG1 16  // D4

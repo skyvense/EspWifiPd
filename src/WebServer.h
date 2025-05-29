@@ -6,6 +6,7 @@
 #include "EspSmartWifi.h"
 #include "PowerMonitor.h"
 #include "Display.h"
+#include "VoltageCtl.h"
 
 #define BUTTON_PIN 0  
 
@@ -28,6 +29,7 @@ private:
     EasyLed& led;
     Display& display;
     PowerMonitor powerMonitor;
+    VoltageCtl voltageCtl;
     
     
     
@@ -35,6 +37,7 @@ private:
     void handleRoot();
     void handleStatus();
     void handlePower();
+    void handleVoltage();
     void handleRestart();
     void handleUpgrade();
     void handleUpdate();

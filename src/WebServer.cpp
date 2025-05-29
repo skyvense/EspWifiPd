@@ -476,6 +476,38 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             color: var(--error-color);
             margin-left: 10px;
         }
+
+        .voltage-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .voltage-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .voltage-option:hover {
+            background: #e9ecef;
+        }
+
+        .voltage-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+        }
+
+        .voltage-option span {
+            font-size: 16px;
+            font-weight: 500;
+        }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -487,37 +519,33 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
         </div>
 
         <div class="power-info relay-control">
-            <h2>Relay Control</h2>
+            <h2>Voltage Control</h2>
             <div class="power-grid">
                 <div class="power-item">
-                    <div class="power-label">Relay 1</div>
-                    <div class="power-value">
-                        <label class="switch">
-                            <input type="checkbox" onchange="toggleRelay(1, this.checked)">
-                            <span class="slider"></span>
+                    <div class="power-label">Please select voltage:</div>
+                    <div class="voltage-options">
+                        <label class="voltage-option">
+                            <input type="radio" name="voltage" value="5" onchange="setVoltage(5)">
+                            <span>5V</span>
+                        </label>
+                        <label class="voltage-option">
+                            <input type="radio" name="voltage" value="9" onchange="setVoltage(9)">
+                            <span>9V</span>
+                        </label>
+                        <label class="voltage-option">
+                            <input type="radio" name="voltage" value="12" onchange="setVoltage(12)">
+                            <span>12V</span>
+                        </label>
+                        <label class="voltage-option">
+                            <input type="radio" name="voltage" value="15" onchange="setVoltage(15)">
+                            <span>15V</span>
+                        </label>
+                        <label class="voltage-option">
+                            <input type="radio" name="voltage" value="20" onchange="setVoltage(20)">
+                            <span>20V</span>
                         </label>
                     </div>
-                    <div class="power-label">Status: <span id="status1">OFF</span></div>
-                </div>
-                <div class="power-item">
-                    <div class="power-label">Relay 2</div>
-                    <div class="power-value">
-                        <label class="switch">
-                            <input type="checkbox" onchange="toggleRelay(2, this.checked)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="power-label">Status: <span id="status2">OFF</span></div>
-                </div>
-                <div class="power-item">
-                    <div class="power-label">Relay 3</div>
-                    <div class="power-value">
-                        <label class="switch">
-                            <input type="checkbox" onchange="toggleRelay(3, this.checked)">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="power-label">Status: <span id="status3">OFF</span></div>
+                    <div class="power-label">Current Voltage: <span id="currentVoltage">5V</span></div>
                 </div>
             </div>
         </div>
@@ -882,6 +910,7 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             checkRelayStates();
             updatePowerData();
             updateBuildDate();
+            checkVoltage();
         });
 
         // 定期更新数据
@@ -1152,13 +1181,52 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
 
         // 定期更新保护状态
         setInterval(updateProtectionStatus, 1000);
+
+        function setVoltage(voltage) {
+            fetch('/voltage?level=' + voltage)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Update voltage display
+                    document.getElementById('currentVoltage').textContent = voltage + 'V';
+                })
+                .catch(error => {
+                    console.error('Error setting voltage:', error);
+                    // If error occurs, recheck voltage to ensure correct display
+                    checkVoltage();
+                });
+        }
+
+        function checkVoltage() {
+            fetch('/voltage')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.voltage) {
+                        const voltage = data.voltage;
+                        document.getElementById('currentVoltage').textContent = voltage + 'V';
+                        // Update radio button selection
+                        const radio = document.querySelector(`input[name="voltage"][value="${voltage}"]`);
+                        if (radio) {
+                            radio.checked = true;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error checking voltage:', error));
+        }
+
+        // Add voltage check to periodic updates
+        setInterval(checkVoltage, 1000);  // Check voltage every second
     </script>
 </body>
 </html>
 )rawliteral";
 
-WebServer::WebServer(EspSmartWifi& wifi, EasyLed& led, Display& display) 
-    : server(80), wifi(wifi), led(led), display(display) {
+WebServer::WebServer(EspSmartWifi& wifi, EasyLed& led, Display& display, VoltageCtl &voltagectl) 
+    : server(80), wifi(wifi), led(led), display(display), voltageCtl(voltagectl) {
     Serial.println("\n=== WebServer Initialization ===");
     
     // 初始化SPIFFS
@@ -1221,6 +1289,7 @@ void WebServer::begin() {
     }
     server.on("/status", HTTP_GET, [this]() { handleStatus(); });
     server.on("/power", HTTP_GET, [this]() { handlePower(); });
+    server.on("/voltage", HTTP_GET, [this]() { handleVoltage(); });  // Add voltage endpoint
     server.on("/restart", HTTP_POST, [this]() { handleRestart(); });
     server.on("/upgrade", HTTP_GET, [this]() { handleUpgrade(); });
     server.on("/update", HTTP_POST, [this]() { handleUpdate(); }, [this]() { handleUpdateUpload(); });
@@ -1596,6 +1665,63 @@ void WebServer::handleGetConfigData() {
     doc["passwd"] = config.Passwd;
     doc["server"] = config.Server;
     doc["topic"] = config.Topic;
+    
+    String response;
+    serializeJson(doc, response);
+    server.send(200, "application/json", response);
+}
+
+void WebServer::handleVoltage() {
+    StaticJsonDocument<256> doc;
+    
+    if (server.hasArg("level")) {
+        int voltage = server.arg("level").toInt();
+        Serial.print("WebServer received voltage request: ");
+        Serial.println(voltage);
+        
+        // 将电压值转换为对应的电压等级
+        uint8_t level;
+        switch (voltage) {
+            case 5: level = VOLTAGE_5V; break;
+            case 9: level = VOLTAGE_9V; break;
+            case 12: level = VOLTAGE_12V; break;
+            case 15: level = VOLTAGE_15V; break;
+            case 20: level = VOLTAGE_20V; break;
+            default:
+                Serial.println("Invalid voltage value");
+                doc["success"] = false;
+                doc["error"] = "Invalid voltage value";
+                String response;
+                serializeJson(doc, response);
+                server.send(400, "application/json", response);
+                return;
+        }
+        
+        if (voltageCtl.setVoltage(level)) {
+            Serial.println("Voltage set successfully");
+            doc["success"] = true;
+            doc["voltage"] = voltage;
+        } else {
+            Serial.println("Failed to set voltage");
+            doc["success"] = false;
+            doc["error"] = "Failed to set voltage";
+        }
+    } else {
+        // If no level specified, return current voltage
+        uint8_t currentLevel = voltageCtl.getCurrentVoltage();
+        int currentVoltage;
+        switch (currentLevel) {
+            case VOLTAGE_5V: currentVoltage = 5; break;
+            case VOLTAGE_9V: currentVoltage = 9; break;
+            case VOLTAGE_12V: currentVoltage = 12; break;
+            case VOLTAGE_15V: currentVoltage = 15; break;
+            case VOLTAGE_20V: currentVoltage = 20; break;
+            default: currentVoltage = 0;
+        }
+        Serial.print("Current voltage level: ");
+        Serial.println(currentVoltage);
+        doc["voltage"] = currentVoltage;
+    }
     
     String response;
     serializeJson(doc, response);
