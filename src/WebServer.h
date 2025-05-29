@@ -7,7 +7,7 @@
 #include "PowerMonitor.h"
 #include "Display.h"
 
-#define BUTTON_PIN 12  
+#define BUTTON_PIN 0  
 
 
 

@@ -18,7 +18,7 @@
 #define STATUS_LED  D4
 
 // Global variables
-EasyLed led(STATUS_LED, EasyLed::ActiveLevel::Low, EasyLed::State::Off);
+EasyLed led(STATUS_LED, EasyLed::ActiveLevel::High, EasyLed::State::Off);
 EspSmartWifi wifi(led);
 Display display;
 WebServer webServer(wifi, led, display);
@@ -240,6 +240,7 @@ void loop() {
     // 处理按钮输入（放在最前面，确保不会被阻塞）
     checkButton();
 
+    // 检查WiFi连接状态，内部会delay(1000)如果没连上Wi-Fi
     wifi.WiFiWatchDog();
     
     // 处理WebServer请求
@@ -258,7 +259,7 @@ void loop() {
         {
             // 每秒发布一次电源数据
             publishPowerData();
-            led.flash(1, 25, 25, 0, 0);
+            led.flash(1, 10, 10, 0, 0);
         }
     } 
     else 
@@ -266,26 +267,29 @@ void loop() {
         // 如果WiFi或MQTT连接断开，尝试重新连接
         if (wifi.isAPMode())
         {
-            loop_count++;
-            if (loop_count % 2000 == 0) 
-            {
-                led.flash(1, 10, 50, 0, 0);
-                delay(10);
-            }
+            led.flash(2, 10, 10, 0, 0);
         } 
         else 
         {
-            if (!mqtt.connected())
+            if (WiFi.status() == WL_CONNECTED)
             {
-                loop_count++;
-                if (loop_count % 5000 == 0) 
+                if (!mqtt.connected())
                 {
-                    if (!connectMQTT()) 
+                    loop_count++;
+                    if (loop_count % 5000 == 0) 
                     {
-                        Serial.println("Failed to reconnect to MQTT server");
+                        if (!connectMQTT()) 
+                        {
+                            Serial.println("Failed to reconnect to MQTT server");
+                        }
+                        led.flash(3, 10, 10, 0, 0);
                     }
-                    led.flash(2, 50, 50, 0, 0);
                 }
+            }
+            else
+            {
+
+                led.flash(3, 100, 100, 0, 0);
             }
         }
        

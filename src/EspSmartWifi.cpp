@@ -83,62 +83,6 @@ bool EspSmartWifi::SaveConfig()
     return true;
 }
 
-bool EspSmartWifi::loadRelayStatesFromFlash() {
-    if (!SPIFFS.exists("/relay_states.json")) {
-        Serial.println("No relay states file found, using defaults");
-        // 使用默认值（全部关闭）
-        for (int i = 0; i < 4; i++) {
-            cachedRelayStates[i] = false;
-        }
-        statesLoaded = true;
-        return true;
-    }
-
-    File file = SPIFFS.open("/relay_states.json", "r");
-    if (!file) {
-        Serial.println("Failed to open relay states file");
-        return false;
-    }
-
-    StaticJsonDocument<256> doc;
-    DeserializationError error = deserializeJson(doc, file);
-    file.close();
-
-    if (error) {
-        Serial.println("Failed to parse relay states file");
-        return false;
-    }
-
-    // 更新缓存
-    for (int i = 0; i < 4; i++) {
-        cachedRelayStates[i] = doc["relay" + String(i)] | false;
-    }
-    statesLoaded = true;
-    return true;
-}
-
-bool EspSmartWifi::saveRelayStatesToFlash() {
-    StaticJsonDocument<256> doc;
-    for (int i = 0; i < 4; i++) {
-        doc["relay" + String(i)] = cachedRelayStates[i];
-    }
-
-    File file = SPIFFS.open("/relay_states.json", "w");
-    if (!file) {
-        Serial.println("Failed to open relay states file for writing");
-        return false;
-    }
-
-    if (serializeJson(doc, file) == 0) {
-        Serial.println("Failed to write relay states");
-        file.close();
-        return false;
-    }
-
-    file.close();
-    return true;
-}
-
 
 void EspSmartWifi::BaseConfig()
 {
@@ -152,16 +96,17 @@ void EspSmartWifi::BaseConfig()
         delay(500);
         Serial.print(".");
         waitCount++;
+        led_.flash(3, 100, 100, 0, 0);
     }
     
     if (WiFi.status() == WL_CONNECTED) {
         Serial.println("\nWiFi connected");
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP());
-        led_.flash(3, 100, 100, 0, 0);  // 快速闪烁3次表示连接成功
+        led_.flash(2, 200, 200, 0, 0);  // 快速闪烁3次表示连接成功
     } else {
         Serial.println("\nWiFi connection failed, will retry...");
-        led_.flash(1, 1000, 1000, 0, 0);  // 慢闪表示等待重连
+        //led_.flash(1, 1000, 1000, 0, 0);  // 慢闪表示等待重连
     }
 }
 
@@ -211,7 +156,7 @@ bool EspSmartWifi::WiFiWatchDog()
 {
     if (WiFi.status() != WL_CONNECTED) {
         Serial.println("WiFi disconnected, attempting to reconnect...");
-        led_.flash(1, 1000, 1000, 0, 0);  // 慢闪表示等待重连
+        delay(1000);
         WiFi.reconnect();
     }
     return true;

@@ -44,9 +44,6 @@ private:
     bool LoadConfig();
     bool SaveConfig();
     
-    // 继电器状态相关方法
-    bool loadRelayStatesFromFlash();  // 从flash加载状态到缓存
-    bool saveRelayStatesToFlash();    // 将缓存保存到flash
 
 public:
     EspSmartWifi(EasyLed &led):
