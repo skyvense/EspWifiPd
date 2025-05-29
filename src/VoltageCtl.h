@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
+#include <FS.h>
+#include <ArduinoJson.h>
 
 // PD电压档位定义
 #define VOLTAGE_5V  0
@@ -20,7 +22,10 @@ public:
     void begin();
     bool setVoltage(uint8_t level);
     uint8_t getCurrentVoltage() const { return currentVoltage; }
+    bool saveConfig();
+    bool loadConfig();
 
 private:
     uint8_t currentVoltage;
+    static const unsigned long VOLTAGE_CHANGE_DELAY = 1000; // 1秒延时
 }; 

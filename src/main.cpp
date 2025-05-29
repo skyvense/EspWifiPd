@@ -205,7 +205,7 @@ void setup() {
     Serial.begin(115200);  // 使用硬件串口，同时用于调试和Air780E通信
     Serial.setRxBufferSize(2048); // 增加串口接收缓冲区大小
 
-    voltageCtl.begin();
+    
     // 初始化电源监控
     if (!powerMonitor.begin()) {
         Serial.println("Failed to initialize power monitor!");
@@ -222,6 +222,7 @@ void setup() {
     wifi.ConnectWifi();
     wifi.DisplayIP();
     
+    voltageCtl.begin();
     // 启动WebServer
     webServer.begin();
     
