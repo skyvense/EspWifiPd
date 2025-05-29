@@ -212,13 +212,112 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
         }
 
         .power-value {
-            font-size: 24px;
+            font-size: 32px;
             font-weight: 600;
             color: var(--primary-color);
             margin: 10px 0;
         }
 
         .power-label {
+            font-size: 14px;
+            color: var(--text-light);
+            margin: 5px 0;
+        }
+
+        .voltage-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+
+        .voltage-option {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 5px;
+        }
+
+        .voltage-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .voltage-option span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voltage-option input[type="radio"]:checked + span {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .voltage-option:hover span {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .voltage-option input[type="radio"]:checked + span:hover {
+            transform: scale(1.05);
+        }
+
+        .voltage-display {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .voltage-display .power-value {
+            font-size: 48px;
+            margin: 10px 0;
+        }
+
+        .voltage-display .power-label {
+            font-size: 16px;
+            color: var(--text-light);
+        }
+
+        .power-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .metric-item .power-value {
+            font-size: 28px;
+            margin: 5px 0;
+        }
+
+        .metric-item .power-label {
             font-size: 14px;
             color: var(--text-light);
         }
@@ -476,38 +575,6 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             color: var(--error-color);
             margin-left: 10px;
         }
-
-        .voltage-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .voltage-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .voltage-option:hover {
-            background: #e9ecef;
-        }
-
-        .voltage-option input[type="radio"] {
-            width: 20px;
-            height: 20px;
-        }
-
-        .voltage-option span {
-            font-size: 16px;
-            font-weight: 500;
-        }
     </style>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -518,47 +585,51 @@ const char WebServer::INDEX_HTML[] PROGMEM = R"rawliteral(
             <div class="status">Status: Connected</div>
         </div>
 
-        <div class="power-info relay-control">
-            <h2>Voltage Control</h2>
-            <div class="power-grid">
-                <div class="power-item">
-                    <div class="power-label">Please select voltage:</div>
-                    <div class="voltage-options">
-                        <label class="voltage-option">
-                            <input type="radio" name="voltage" value="5" onchange="setVoltage(5)">
-                            <span>5V</span>
-                        </label>
-                        <label class="voltage-option">
-                            <input type="radio" name="voltage" value="9" onchange="setVoltage(9)">
-                            <span>9V</span>
-                        </label>
-                        <label class="voltage-option">
-                            <input type="radio" name="voltage" value="12" onchange="setVoltage(12)">
-                            <span>12V</span>
-                        </label>
-                        <label class="voltage-option">
-                            <input type="radio" name="voltage" value="15" onchange="setVoltage(15)">
-                            <span>15V</span>
-                        </label>
-                        <label class="voltage-option">
-                            <input type="radio" name="voltage" value="20" onchange="setVoltage(20)">
-                            <span>20V</span>
-                        </label>
-                    </div>
-                    <div class="power-label">Current Voltage: <span id="currentVoltage">5V</span></div>
+        <div class="power-info power-monitor">
+            <h2>Power Monitoring</h2>
+            <div class="power-metrics">
+                <div class="metric-item">
+                    <div class="power-label">Power</div>
+                    <div class="power-value" id="power1">0.00 W</div>
+                </div>
+                <div class="metric-item">
+                    <div class="power-label">Current</div>
+                    <div class="power-value" id="current1">0.00 mA</div>
+                </div>
+                <div class="metric-item">
+                    <div class="power-label">Voltage</div>
+                    <div class="power-value" id="voltage1">0.00 V</div>
                 </div>
             </div>
         </div>
 
-        <div class="power-info power-monitor">
-            <h2>Power Monitoring</h2>
-            <div class="power-grid">
-                <div class="power-item">
-                    <div class="power-label">Power Monitor</div>
-                    <div class="power-value" id="power1">0.00 W</div>
-                    <div class="power-label">Current: <span id="current1">0.00 mA</span></div>
-                    <div class="power-label">Voltage: <span id="voltage1">0.00 V</span></div>
-                </div>
+        <div class="power-info relay-control">
+            <h2>Voltage Control</h2>
+            <div class="voltage-options">
+                <label class="voltage-option">
+                    <input type="radio" name="voltage" value="5" onchange="setVoltage(5)">
+                    <span>5V</span>
+                </label>
+                <label class="voltage-option">
+                    <input type="radio" name="voltage" value="9" onchange="setVoltage(9)">
+                    <span>9V</span>
+                </label>
+                <label class="voltage-option">
+                    <input type="radio" name="voltage" value="12" onchange="setVoltage(12)">
+                    <span>12V</span>
+                </label>
+                <label class="voltage-option">
+                    <input type="radio" name="voltage" value="15" onchange="setVoltage(15)">
+                    <span>15V</span>
+                </label>
+                <label class="voltage-option">
+                    <input type="radio" name="voltage" value="20" onchange="setVoltage(20)">
+                    <span>20V</span>
+                </label>
+            </div>
+            <div class="voltage-display">
+                <div class="power-label">Current Voltage</div>
+                <div class="power-value" id="currentVoltage">5V</div>
             </div>
         </div>
 
