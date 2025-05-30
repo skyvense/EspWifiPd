@@ -258,7 +258,7 @@ void loop() {
         // 定期处理MQTT消息
         mqtt.loop();
         loop_count++;
-        if (loop_count % 1000 == 0) 
+        if (loop_count % 10000 == 0) 
         {
             // 每秒发布一次电源数据
             publishPowerData();
