@@ -190,28 +190,15 @@ float Adafruit_INA219::getPower_mW() {
  *  @note   These calculations assume a 0.01 ohm resistor is present
  */
 void Adafruit_INA219::setCalibration_32V_2A() {
-  // 使用0.01欧姆分流电阻的校准
-  // VBUS_MAX = 32V
-  // VSHUNT_MAX = 0.32V (使用增益8，320mV)
-  // RSHUNT = 0.01欧姆
+  // 按实际电流修正校准值
+  ina219_calValue = 32720; // 原40960，修正后
+  ina219_currentDivider_mA = 10;
+  ina219_powerMultiplier_mW = 2;
 
-  // 1. 最大可能电流 = VSHUNT_MAX / RSHUNT = 0.32V / 0.01Ω = 32A
-  // 2. 最大预期电流 = 2.0A
-  // 3. LSB = 0.0001 (100uA/bit)
-  // 4. 校准值 = 0.04096 / (0.0001 * 0.01) = 40960
-
-  ina219_calValue = 40960;
-
-  // 设置电流和功率转换系数
-  ina219_currentDivider_mA = 10;    // 电流LSB = 100uA/bit (1000/100 = 10)
-  ina219_powerMultiplier_mW = 2;    // 功率LSB = 2mW/bit
-
-  // 设置校准寄存器
   Adafruit_BusIO_Register calibration_reg =
       Adafruit_BusIO_Register(i2c_dev, INA219_REG_CALIBRATION, 2, MSBFIRST);
   calibration_reg.write(ina219_calValue, 2);
 
-  // 设置配置寄存器
   uint16_t config = INA219_CONFIG_BVOLTAGERANGE_32V |
                     INA219_CONFIG_GAIN_8_320MV | INA219_CONFIG_BADCRES_12BIT |
                     INA219_CONFIG_SADCRES_12BIT_1S_532US |
