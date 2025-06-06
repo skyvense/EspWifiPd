@@ -283,21 +283,22 @@ void loop() {
         float current = powerMonitor.getCurrent_mA();
         float voltage = powerMonitor.getBusVoltage_V();
         
-        // 根据电压和电流值设置RGB灯颜色
-        uint32_t color;
-        // 电流范围：0-1000mA，亮度范围：50-255
-        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 100, 255);
-        
-        // 根据电压值选择颜色
-        if (voltage <= 5.4) {
-            color = pixels.Color(0, 255, 0);    // 绿色 - 5V及以下
-        } else if (voltage <= 12.5) {
-            color = pixels.Color(0, 0, 255);    // 蓝色 - 5-12V
-        } else {
-            color = pixels.Color(255, 0, 0);    // 红色 - 12V以上
+        // 根据实际电压区间设置RGB颜色
+        uint32_t color = pixels.Color(0, 0, 0); // 默认熄灭
+        if (voltage >= 4.6 && voltage <= 5.4) {
+            color = pixels.Color(0, 255, 0); // 绿色
+        } else if (voltage >= 8.6 && voltage <= 9.4) {
+            color = pixels.Color(0, 0, 255); // 蓝色
+        } else if (voltage >= 11.6 && voltage <= 12.4) {
+            color = pixels.Color(128, 0, 128); // 紫色
+        } else if (voltage >= 14.6 && voltage <= 15.4) {
+            color = pixels.Color(255, 0, 0); // 红色
+        } else if (voltage >= 19.6 && voltage <= 20.4) {
+            color = pixels.Color(255, 255, 255); // 白色
         }
 
-        // 设置LED颜色和亮度
+        // 亮度随电流变化
+        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 10, 255);
         pixels.setBrightness(brightness);
         pixels.setPixelColor(0, color);
         pixels.show();
