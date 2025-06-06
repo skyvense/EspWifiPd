@@ -6,7 +6,7 @@
 #include <EasyLed.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-//#include <Adafruit_NeoPixel.h>
+#include <Adafruit_NeoPixel.h>
 
 #include "EspSmartWifi.h"
 #include "WebServer.h"
@@ -16,6 +16,11 @@
 //#define PIN        D8
 
 #define STATUS_LED  D4
+#define RGB_LED_PIN 13  // GPIO13
+#define NUM_LEDS    1   // LED数量
+#define BRIGHTNESS  50  // 亮度（0-255）
+
+Adafruit_NeoPixel pixels(NUM_LEDS, RGB_LED_PIN, NEO_GRB + NEO_KHZ800);
 
 // Global variables
 EasyLed led(STATUS_LED, EasyLed::ActiveLevel::High, EasyLed::State::Off);
@@ -202,9 +207,13 @@ void checkButton() {
 }
 
 void setup() {
-    Serial.begin(115200);  // 使用硬件串口，同时用于调试和Air780E通信
-    Serial.setRxBufferSize(2048); // 增加串口接收缓冲区大小
+    Serial.begin(115200);
+    Serial.setRxBufferSize(2048);
 
+    // 初始化NeoPixel
+    pixels.begin();
+    pixels.setBrightness(BRIGHTNESS);
+    pixels.show(); // 初始化时关闭所有LED
     
     // 初始化电源监控
     if (!powerMonitor.begin()) {
@@ -215,8 +224,6 @@ void setup() {
     if (!display.begin()) {
         Serial.println("Failed to initialize OLED display!");
     }
-
-    //pixels.begin();
 
     wifi.initFS();
     wifi.ConnectWifi();
@@ -252,6 +259,32 @@ void loop() {
     // 更新OLED显示
     display.update();
 
+    if (loop_count % 100 == 0)
+    {
+        // 获取电压和电流值
+        float current = powerMonitor.getCurrent_mA();
+        float voltage = powerMonitor.getBusVoltage_V();
+        
+        // 根据电压和电流值设置RGB灯颜色
+        uint32_t color;
+        // 电流范围：0-1000mA，亮度范围：50-255
+        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 100, 255);
+        
+        // 根据电压值选择颜色
+        if (voltage <= 5.4) {
+            color = pixels.Color(0, 255, 0);    // 绿色 - 5V及以下
+        } else if (voltage <= 12.5) {
+            color = pixels.Color(0, 0, 255);    // 蓝色 - 5-12V
+        } else {
+            color = pixels.Color(255, 0, 0);    // 红色 - 12V以上
+        }
+
+        // 设置LED颜色和亮度
+        pixels.setBrightness(brightness);
+        pixels.setPixelColor(0, color);
+        pixels.show();
+    }
+    
     // 如果WiFi和MQTT都连接成功
     if (WiFi.status() == WL_CONNECTED && mqtt.connected()) 
     {
@@ -291,12 +324,10 @@ void loop() {
             }
             else
             {
-
                 led.flash(3, 100, 100, 0, 0);
             }
         }
-       
     }
 
-    delay(1);  // 减少主循环延迟
+    delay(1);  
 }
