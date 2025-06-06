@@ -286,7 +286,7 @@ void loop() {
         // 根据电压和电流值设置RGB灯颜色
         uint32_t color;
         // 电流范围：0-1000mA，亮度范围：50-255
-        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 10, 255);
+        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 100, 255);
         
         // 根据电压值选择颜色
         if (voltage <= 5.4) {

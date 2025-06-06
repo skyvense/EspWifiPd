@@ -63,7 +63,7 @@ bool VoltageCtl::setVoltage(uint8_t level) {
 
     currentVoltage = level;
     delay(1000); // 延时1秒，等待电压稳定
-    //saveConfig(); // 保存配置
+    saveConfig(); // 保存配置
     Serial.print("Voltage set to: ");
     Serial.println(level);
     return true;
