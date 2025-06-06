@@ -45,6 +45,10 @@ bool lastButtonState = HIGH;
 unsigned long lastButtonPress = 0;
 const unsigned long debounceDelay = 50;
 
+// 添加电压切换相关的变量
+uint8_t voltageLevels[] = {VOLTAGE_5V, VOLTAGE_9V, VOLTAGE_12V, VOLTAGE_15V, VOLTAGE_20V};  // 电压等级
+int currentVoltageIndex = 0;  // 当前电压等级索引
+
 // 解析MQTT服务器地址
 bool parseMQTTServer(const String& serverUrl, String& host, int& port, String& username, String& password) {
     // 检查URL格式
@@ -197,7 +201,21 @@ void checkButton() {
                 
                 // 如果按下时间小于3秒，执行短按操作
                 if (millis() - pressStartTime < 3000) {
-                    webServer.handleButtonPress();
+                    // 切换到下一个电压等级
+                    currentVoltageIndex = (currentVoltageIndex + 1) % (sizeof(voltageLevels) / sizeof(voltageLevels[0]));
+                    uint8_t newVoltageLevel = voltageLevels[currentVoltageIndex];
+                    
+                    // 设置新的电压
+                    if (voltageCtl.setVoltage(newVoltageLevel)) {
+                        // 显示当前电压等级
+                        Serial.print("Switching to voltage level: ");
+                        Serial.println(newVoltageLevel);
+                        
+                        // 闪烁LED指示电压切换
+                        led.flash(1, 100, 100, 0, 0);
+                    } else {
+                        Serial.println("Failed to set voltage level");
+                    }
                 }
             }
             lastButtonPress = millis();
@@ -268,7 +286,7 @@ void loop() {
         // 根据电压和电流值设置RGB灯颜色
         uint32_t color;
         // 电流范围：0-1000mA，亮度范围：50-255
-        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 100, 255);
+        uint8_t brightness = map(constrain(current, 0, 1000), 0, 1000, 10, 255);
         
         // 根据电压值选择颜色
         if (voltage <= 5.4) {
