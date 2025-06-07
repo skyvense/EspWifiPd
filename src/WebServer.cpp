@@ -950,20 +950,25 @@ void WebServer::begin() {
     // 先停止服务器
     server.stop();
     
-    // 重新初始化路由
-    if (wifi.isAPMode())
-    {
-        server.on("/", HTTP_GET, [this]() { HandleConfigRoot(); });
-        server.on("/config/data", HTTP_POST, [this]() { HandleConfigSave(); });
-        server.on("/config/data", HTTP_GET, [this]() { handleGetConfigData(); });  // 添加新的配置数据接口
-    }
-    else
-    {
-        server.on("/", HTTP_GET, [this]() { handleRoot(); });
-        server.on("/config", HTTP_GET, [this]() { HandleConfigRoot(); });
-        server.on("/config/data", HTTP_POST, [this]() { HandleConfigSave(); });
-        server.on("/config/data", HTTP_GET, [this]() { handleGetConfigData(); });  // 添加新的配置数据接口
-    }
+    // // 重新初始化路由
+    // if (wifi.isAPMode())
+    // {
+    //     server.on("/", HTTP_GET, [this]() { HandleConfigRoot(); });
+    //     server.on("/config/data", HTTP_POST, [this]() { HandleConfigSave(); });
+    //     server.on("/config/data", HTTP_GET, [this]() { handleGetConfigData(); });  // 添加新的配置数据接口
+    // }
+    // else
+    // {
+    //     server.on("/", HTTP_GET, [this]() { handleRoot(); });
+    //     server.on("/config", HTTP_GET, [this]() { HandleConfigRoot(); });
+    //     server.on("/config/data", HTTP_POST, [this]() { HandleConfigSave(); });
+    //     server.on("/config/data", HTTP_GET, [this]() { handleGetConfigData(); });  // 添加新的配置数据接口
+    // }
+    server.on("/", HTTP_GET, [this]() { handleRoot(); });
+    server.on("/config", HTTP_GET, [this]() { HandleConfigRoot(); });
+    server.on("/config/data", HTTP_POST, [this]() { HandleConfigSave(); });
+    server.on("/config/data", HTTP_GET, [this]() { handleGetConfigData(); });  // 添加新的配置数据接口  
+    
     server.on("/status", HTTP_GET, [this]() { handleStatus(); });
     server.on("/power", HTTP_GET, [this]() { handlePower(); });
     server.on("/voltage", HTTP_GET, [this]() { handleVoltage(); });  // Add voltage endpoint

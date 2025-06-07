@@ -191,9 +191,9 @@ float Adafruit_INA219::getPower_mW() {
  */
 void Adafruit_INA219::setCalibration_32V_2A() {
   // 按实际电流修正校准值
-  ina219_calValue = 32720; // 原40960，修正后
-  ina219_currentDivider_mA = 10;
-  ina219_powerMultiplier_mW = 2;
+  ina219_calValue = 1800; // 原40960，修正后
+  ina219_currentDivider_mA = 1;
+  ina219_powerMultiplier_mW = 20;
 
   Adafruit_BusIO_Register calibration_reg =
       Adafruit_BusIO_Register(i2c_dev, INA219_REG_CALIBRATION, 2, MSBFIRST);
