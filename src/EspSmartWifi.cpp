@@ -43,6 +43,7 @@ bool EspSmartWifi::LoadConfig()
     _config.Passwd = doc["passwd"] | "1";
     _config.Server = doc["server"] | "192.1.8.3";
     _config.Topic = doc["topic"] | "/espRouterPower/power";
+    _config.bConfigValid = true;
 
     Serial.println("WiFi configuration loaded successfully");
     Serial.println("=== WiFi Configuration Load Complete ===\n");
@@ -96,17 +97,16 @@ void EspSmartWifi::BaseConfig()
         delay(500);
         Serial.print(".");
         waitCount++;
-        led_.flash(3, 100, 100, 0, 0);
     }
     
     if (WiFi.status() == WL_CONNECTED) {
         Serial.println("\nWiFi connected");
         Serial.print("IP address: ");
         Serial.println(WiFi.localIP());
-        led_.flash(2, 200, 200, 0, 0);  // 快速闪烁3次表示连接成功
+        led_.flash(3, 100, 100, 0, 0);  // 快速闪烁3次表示连接成功
     } else {
         Serial.println("\nWiFi connection failed, will retry...");
-        //led_.flash(1, 1000, 1000, 0, 0);  // 慢闪表示等待重连
+        led_.flash(1, 1000, 1000, 0, 0);  // 慢闪表示等待重连
     }
 }
 
@@ -124,20 +124,36 @@ void EspSmartWifi::StartAPMode()
     
     // 配置AP模式
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(apName.c_str(), "12345678");  // 使用固定的密码
+    WiFi.softAP(apName.c_str(), "12345678", 6);  // 使用固定的密码
     
     Serial_debug.print("AP started with SSID: ");
     Serial_debug.println(apName);
     Serial_debug.print("AP IP address: ");
     Serial_debug.println(WiFi.softAPIP());
     
-    Serial_debug.println("HTTP server started");
-    
     _isAPMode = true;
     led_.flash(2, 100, 100, 0, 0);  // 慢闪表示AP模式
 }
 
+void EspSmartWifi::StopAPMode() {
+    if (!_isAPMode) return;
+    Serial_debug.println("Stopping AP mode, switching to STA mode...");
+    WiFi.softAPdisconnect(true);
+    WiFi.mode(WIFI_STA);
+    _isAPMode = false;
+    led_.flash(1, 100, 100, 0, 0); // 快闪表示退出AP
+}
 
+void EspSmartWifi::TryConnectWifi() {
+    Serial_debug.println("Trying to connect to WiFi...");
+    Serial_debug.print("SSID: ");
+    Serial_debug.println(_config.SSID);
+    Serial_debug.print("Password: ");
+    Serial_debug.println(_config.Passwd);
+    
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(_config.SSID.c_str(), _config.Passwd.c_str());
+}
 
 void EspSmartWifi::ConnectWifi()
 {
@@ -154,12 +170,47 @@ void EspSmartWifi::ConnectWifi()
 
 bool EspSmartWifi::WiFiWatchDog()
 {
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("WiFi disconnected, attempting to reconnect...");
-        delay(1000);
-        WiFi.reconnect();
+    static unsigned long lastCheck = 0;
+    static unsigned long lastModeSwitchMillis = 0;
+    static bool apModeActive = false;
+    unsigned long now = millis();
+
+    // 每5秒检查一次WiFi状态
+    if (now - lastCheck < 5000) {
+        return WiFi.status() == WL_CONNECTED;
     }
-    return true;
+    lastCheck = now;
+
+    if (WiFi.status() != WL_CONNECTED) {
+        if (!_isAPMode && _config.bConfigValid)
+        {
+            Serial.println("WiFi disconnected, attempting to reconnect...");
+            led_.flash(1, 100, 100, 0, 0);  // 慢闪表示等待重连
+            WiFi.begin(_config.SSID.c_str(), _config.Passwd.c_str());
+        }
+
+        // 自动AP/STA切换逻辑
+        if (!_isAPMode && now - lastModeSwitchMillis > 60000) {  // 1分钟后进入AP模式
+            StartAPMode();
+            apModeActive = true;
+            lastModeSwitchMillis = now;
+        } else if (_isAPMode && apModeActive && now - lastModeSwitchMillis > 180000) {  // 3分钟后退出AP模式
+            StopAPMode();
+            TryConnectWifi();
+            apModeActive = false;
+            lastModeSwitchMillis = now;
+        }
+    } else {
+        // WiFi已连接
+        if (_isAPMode) {
+            StopAPMode();
+        }
+        led_.flash(1, 100, 100, 0, 0);  // 快闪表示已连接
+        apModeActive = false;
+        lastModeSwitchMillis = now;
+    }
+
+    return WiFi.status() == WL_CONNECTED;
 }
 
 void EspSmartWifi::initFS()

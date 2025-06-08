@@ -23,7 +23,7 @@
 Adafruit_NeoPixel pixels(NUM_LEDS, RGB_LED_PIN, NEO_GRB + NEO_KHZ800);
 
 // Global variables
-EasyLed led(STATUS_LED, EasyLed::ActiveLevel::High, EasyLed::State::Off);
+EasyLed led(STATUS_LED, EasyLed::ActiveLevel::Low, EasyLed::State::Off);
 EspSmartWifi wifi(led);
 Display display;
 VoltageCtl voltageCtl;
@@ -302,6 +302,22 @@ void loop() {
         pixels.setBrightness(brightness);
         pixels.setPixelColor(0, color);
         pixels.show();
+
+        // 电压异常时STATUS_LED快速闪烁
+        float setTarget = 0;
+        switch (voltageCtl.getCurrentVoltage()) {
+            case VOLTAGE_5V:  setTarget = 5.0; break;
+            case VOLTAGE_9V:  setTarget = 9.0; break;
+            case VOLTAGE_12V: setTarget = 12.0; break;
+            case VOLTAGE_15V: setTarget = 15.0; break;
+            case VOLTAGE_20V: setTarget = 20.0; break;
+            default: setTarget = 0; break;
+        }
+        if (fabs(voltage - setTarget) > 0.4) {
+            led.flash(10, 50, 50, 0, 0); // 快速闪烁10次
+        } else {
+            led.off();
+        }
     }
     
     // 如果WiFi和MQTT都连接成功
@@ -314,39 +330,39 @@ void loop() {
         {
             // 每秒发布一次电源数据
             publishPowerData();
-            led.flash(1, 10, 10, 0, 0);
+            led.flash(1, 25, 25, 0, 0);
         }
     } 
     else 
     {
         // 如果WiFi或MQTT连接断开，尝试重新连接
         if (wifi.isAPMode())
-        {
-            led.flash(2, 10, 10, 0, 0);
+        {            
+            loop_count++;
+            if (loop_count % 2000 == 0) 
+            {
+                led.flash(1, 10, 50, 0, 0);
+                delay(10);
+            }
         } 
         else 
         {
-            if (WiFi.status() == WL_CONNECTED)
+            if (!mqtt.connected())
             {
-                if (!mqtt.connected())
+                loop_count++;
+                if (loop_count % 5000 == 0) 
                 {
-                    loop_count++;
-                    if (loop_count % 5000 == 0) 
+                    if (!connectMQTT()) 
                     {
-                        if (!connectMQTT()) 
-                        {
-                            Serial.println("Failed to reconnect to MQTT server");
-                        }
-                        led.flash(3, 10, 10, 0, 0);
+                        Serial.println("Failed to reconnect to MQTT server");
                     }
+                    led.flash(2, 50, 50, 0, 0);
                 }
             }
-            else
-            {
-                led.flash(3, 100, 100, 0, 0);
-            }
         }
+
     }
 
-    delay(1);  
+
+    delay(1);  // 减少主循环延迟
 }

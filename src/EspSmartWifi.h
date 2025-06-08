@@ -11,6 +11,7 @@ struct Config {
   String Passwd = "1";
   String Server = "mqtt://username:passwd@mqtt.server";  // MQTT服务器地址，支持认证
   String Topic = "/espRouterPower/power";  // MQTT主题
+  bool bConfigValid = false;
 };
 
 struct EMPTY_SERIAL
@@ -35,11 +36,8 @@ private:
     fs::File root;
     Config _config;
     bool _isAPMode;
-    bool cachedRelayStates[4] = {false};  // 缓存继电器状态
-    bool statesLoaded = false;  // 标记是否已加载状态
 
     void BaseConfig();
-    void StartAPMode();
 
     bool LoadConfig();
     bool SaveConfig();
@@ -68,7 +66,11 @@ public:
     bool SaveConfig(Config config);
     // 获取AP模式状态
     bool isAPMode() const { return _isAPMode; }
-};
+
+    void StartAPMode();
+    void StopAPMode();
+    void TryConnectWifi();
+  };
 
 
 
