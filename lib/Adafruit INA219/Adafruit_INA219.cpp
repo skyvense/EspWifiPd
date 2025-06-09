@@ -190,10 +190,9 @@ float Adafruit_INA219::getPower_mW() {
  *  @note   These calculations assume a 0.01 ohm resistor is present
  */
 void Adafruit_INA219::setCalibration_32V_2A() {
-  // 按实际电流修正校准值
-  ina219_calValue = 1800; // 原40960，修正后
-  ina219_currentDivider_mA = 1;
-  ina219_powerMultiplier_mW = 20;
+  ina219_calValue = 4096; // 适用于0.1Ω分流电阻
+  ina219_currentDivider_mA = 10; // 1位=0.1mA
+  ina219_powerMultiplier_mW = 2; // 1位=2mW
 
   Adafruit_BusIO_Register calibration_reg =
       Adafruit_BusIO_Register(i2c_dev, INA219_REG_CALIBRATION, 2, MSBFIRST);

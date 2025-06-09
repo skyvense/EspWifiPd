@@ -284,7 +284,7 @@ void loop() {
         float voltage = powerMonitor.getBusVoltage_V();
         
         // 根据实际电压区间设置RGB颜色
-        uint32_t color = pixels.Color(0, 0, 0); // 默认熄灭
+        uint32_t color = pixels.Color(128, 128, 0); // 默认
         if (voltage >= 4.6 && voltage <= 5.4) {
             color = pixels.Color(0, 255, 0); // 绿色
         } else if (voltage >= 8.6 && voltage <= 9.4) {

@@ -10,7 +10,7 @@ struct Config {
   String SSID = "1";
   String Passwd = "1";
   String Server = "mqtt://username:passwd@mqtt.server";  // MQTT服务器地址，支持认证
-  String Topic = "/espRouterPower/power";  // MQTT主题
+  String Topic = "/espPd/power";  // MQTT主题
   bool bConfigValid = false;
 };
 
