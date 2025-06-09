@@ -1,94 +1,147 @@
-# ESP8266 Power Distribution Controller
+# ESP8266 PD WiFi Power Supply
 
-基于 ESP8266 的智能电源分配控制器，支持3通道继电器控制和单通道功率监测。
+A smart power supply system based on ESP8266 and INA219, featuring USB PD (Power Delivery) support, real-time power monitoring, and WiFi connectivity.
 
-## 硬件要求
+## Features
 
-- ESP8266 NodeMCU 开发板
-- 3通道继电器模块
-- INA219 电流/电压传感器
-- 10mΩ 分流电阻
+- **USB PD Support**
+  - USB Power Delivery protocol support
+  - Multiple voltage/current profiles
+  - Dynamic power negotiation
 
-## 引脚定义
+- **High-Precision Power Monitoring**
+  - Current measurement range: 0-2A with 0.1mA resolution
+  - Voltage measurement range: 0-32V
+  - Power measurement with 2mW resolution
+  - Calibrated for 0.01Ω shunt resistor
 
-- 继电器控制引脚：
-  - RELAY1: D6 (GPIO12)
-  - RELAY2: D7 (GPIO13)
-  - RELAY3: D8 (GPIO15)
-- INA219 传感器：
-  - SDA: D2 (GPIO4)
-  - SCL: D1 (GPIO5)
+- **Real-time Web Interface**
+  - Live data visualization using Chart.js
+  - Responsive design for both desktop and mobile
+  - Auto-refreshing data every 2 seconds
+  - Historical data display with configurable time range
 
-## 功能特性
+- **Network Features**
+  - WiFi connectivity with automatic reconnection
+  - Access Point mode for direct connection
+  - Configurable WiFi credentials
+  - Network status monitoring
 
-1. 继电器控制
-   - 3通道独立控制
-   - 支持手动开关和定时控制
-   - 状态记忆功能
+## Hardware Requirements
 
-2. 功率监测
-   - 电压监测 (0-32V)
-   - 电流监测 (0-1A)
-   - 功率计算
-   - 过流保护
+- ESP8266 NodeMCU development board
+- INA219 current sensor
+- 0.01Ω shunt resistor
+- USB PD controller
+- Power supply (3.3V-5V)
+- USB cable for programming
 
-3. Web界面
-   - 响应式设计，支持移动端访问
-   - 实时状态显示
-   - 继电器控制开关
-   - 功率监测数据显示
-   - 固件更新功能
+## Software Requirements
 
-4. WiFi功能
-   - 支持AP模式和STA模式
-   - 自动重连
-   - 配置保存
+- PlatformIO IDE
+- ESP8266 Arduino Core
+- Required Libraries:
+  - Adafruit INA219
+  - ESPAsyncWebServer
+  - AsyncTCP
+  - ArduinoJson
+  - SPIFFS
 
-## 编译和上传
+## Installation
 
-1. 安装依赖
-   - Arduino IDE 或 PlatformIO
-   - ESP8266 开发板支持包
-   - 必要的库：
-     - Adafruit INA219
-     - ArduinoJson
-     - ESP8266WiFi
-     - ESP8266WebServer
+1. Clone this repository
+2. Open the project in PlatformIO
+3. Install required libraries
+4. Configure WiFi credentials in `config.h`
+5. Upload the code to ESP8266
+6. Upload the web interface files to SPIFFS
 
-2. 编译和上传
-   - 使用 PlatformIO 编译和上传
-   - 或使用 Arduino IDE 编译和上传
+## Configuration
 
-## 使用说明
+### WiFi Settings
+Edit `config.h` to set your WiFi credentials:
+```cpp
+#define WIFI_SSID "your_ssid"
+#define WIFI_PASSWORD "your_password"
+```
 
-1. 首次使用
-   - 设备启动后会创建名为 "ESP_Power_Control" 的AP
-   - 连接该AP，访问 192.168.4.1
-   - 配置WiFi连接信息
+### Measurement Settings
+- Current measurement is calibrated for 0.01Ω shunt resistor
+- Default sampling interval: 2 seconds
+- Default data retention: 24 hours
 
-2. 正常使用
-   - 通过Web界面控制继电器
-   - 查看实时功率数据
-   - 设置过流保护阈值
-   - 配置定时任务
+## Usage
 
-## 注意事项
+1. Power on the ESP8266
+2. Connect to the ESP8266's WiFi network
+3. Open a web browser and navigate to `http://192.168.4.1`
+4. View real-time measurements and historical data
+5. Use the interface to:
+   - Monitor current, voltage, and power
+   - Configure PD profiles
+   - View network status
 
-1. 硬件连接
-   - 确保继电器模块正确连接
-   - INA219 传感器需要正确接线
-   - 分流电阻需要精确焊接
+## Data Format
 
-2. 安全使用
-   - 注意电压和电流限制
-   - 定期检查接线
-   - 保持通风散热
+The system uses two data formats:
 
-## 更新日志
+### Real-time Data (JSON)
+```json
+{
+    "channel1": {
+        "current": 1.599999905,  // Current in mA
+        "voltage": 11.56799984,  // Voltage in V
+        "power": 18.5087986      // Power in mW
+    }
+}
+```
 
-### v1.0.0
-- 初始版本
-- 3通道继电器控制
-- INA219功率监测
-- Web控制界面
-- WiFi配置功能
+### Units
+- Current: milliamperes (mA)
+- Voltage: volts (V)
+- Power: milliwatts (mW)
+
+### Data Storage
+- Data is stored in JSON format
+- Timestamps are in Unix epoch format
+- Values are stored with 6 decimal places precision
+
+## Calibration
+
+The system is pre-calibrated for a 0.01Ω shunt resistor. If using a different shunt resistor, adjust the calibration values in the INA219 library:
+
+```cpp
+ina219_calValue = 30720;  // Calibration value for 0.01Ω shunt
+ina219_currentDivider_mA = 10;
+ina219_powerMultiplier_mW = 2;
+```
+
+## Troubleshooting
+
+1. **No WiFi Connection**
+   - Check WiFi credentials
+   - Ensure ESP8266 is in range
+   - Verify power supply
+
+2. **Inaccurate Measurements**
+   - Verify shunt resistor value
+   - Check calibration values
+   - Ensure proper connections
+
+3. **Web Interface Not Loading**
+   - Clear browser cache
+   - Check SPIFFS upload
+   - Verify network connection
+
+4. **PD Issues**
+   - Check USB cable quality
+   - Verify PD controller connections
+   - Ensure proper power supply
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
