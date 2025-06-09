@@ -13,7 +13,7 @@ A smart power supply system based on ESP8266 and INA219, featuring USB PD (Power
   - Current measurement range: 0-2A with 0.1mA resolution
   - Voltage measurement range: 0-32V
   - Power measurement with 2mW resolution
-  - Calibrated for 0.01Ω shunt resistor
+  - Calibrated for 0.1Ω shunt resistor
 
 - **Real-time Web Interface**
   - Live data visualization using Chart.js
@@ -31,7 +31,7 @@ A smart power supply system based on ESP8266 and INA219, featuring USB PD (Power
 
 - ESP8266 NodeMCU development board
 - INA219 current sensor
-- 0.01Ω shunt resistor
+- 0.1Ω shunt resistor
 - USB PD controller
 - Power supply (3.3V-5V)
 - USB cable for programming
@@ -66,7 +66,7 @@ Edit `config.h` to set your WiFi credentials:
 ```
 
 ### Measurement Settings
-- Current measurement is calibrated for 0.01Ω shunt resistor
+- Current measurement is calibrated for 0.1Ω shunt resistor
 - Default sampling interval: 2 seconds
 - Default data retention: 24 hours
 
@@ -108,12 +108,12 @@ The system uses two data formats:
 
 ## Calibration
 
-The system is pre-calibrated for a 0.01Ω shunt resistor. If using a different shunt resistor, adjust the calibration values in the INA219 library:
+The system is pre-calibrated for a 0.1Ω shunt resistor. If using a different shunt resistor, adjust the calibration values in the INA219 library:
 
 ```cpp
-ina219_calValue = 30720;  // Calibration value for 0.01Ω shunt
-ina219_currentDivider_mA = 10;
-ina219_powerMultiplier_mW = 2;
+ina219_calValue = 4096;  // Calibration value for 0.1Ω shunt
+ina219_currentDivider_mA = 10;  // 1 bit = 0.1mA
+ina219_powerMultiplier_mW = 2;  // 1 bit = 2mW
 ```
 
 ## Troubleshooting
